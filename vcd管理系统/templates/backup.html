@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+
+{% block title %}数据备份 - 音像店VCD管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-database me-2"></i>数据备份与恢复
+            </h2>
+        </div>
+    </div>
+
+    <!-- 备份操作区域 -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-download me-2"></i>数据备份
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        备份系统中的所有数据，包括VCD信息、库存数据、销售记录、借还记录等。
+                    </p>
+                    <div class="mb-3">
+                        <label for="backup_note" class="form-label">备份备注</label>
+                        <input type="text" class="form-control" id="backup_note" placeholder="可选：输入备份描述">
+                    </div>
+                    <button class="btn btn-primary btn-lg" onclick="createBackup()">
+                        <i class="fas fa-save me-2"></i>创建备份
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-upload me-2"></i>数据恢复
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        从备份文件恢复数据。<strong class="text-danger">注意：此操作将覆盖当前所有数据！</strong>
+                    </p>
+                    <div class="mb-3">
+                        <label for="restore_file" class="form-label">选择备份文件</label>
+                        <input type="file" class="form-control" id="restore_file" accept=".json">
+                    </div>
+                    <button class="btn btn-warning btn-lg" onclick="restoreBackup()">
+                        <i class="fas fa-upload me-2"></i>恢复数据
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 备份列表 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">本地备份文件</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>提示：</strong>备份文件保存在服务器本地目录中。建议定期将备份文件下载到安全位置保存。
+                    </div>
+                    
+                    <div id="backupList">
+                        <!-- 备份文件列表将动态加载 -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据概览 -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">当前数据概览</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <i class="fas fa-compact-disc fa-2x text-primary mb-2"></i>
+                                <h5 id="totalVcds">0</h5>
+                                <small class="text-muted">VCD种类</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <i class="fas fa-boxes fa-2x text-success mb-2"></i>
+                                <h5 id="totalInventory">0</h5>
+                                <small class="text-muted">库存记录</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <i class="fas fa-shopping-cart fa-2x text-warning mb-2"></i>
+                                <h5 id="totalSales">0</h5>
+                                <small class="text-muted">销售记录</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <i class="fas fa-handshake fa-2x text-info mb-2"></i>
+                                <h5 id="totalRentals">0</h5>
+                                <small class="text-muted">借还记录</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <i class="fas fa-users fa-2x text-secondary mb-2"></i>
+                                <h5 id="totalCustomers">0</h5>
+                                <small class="text-muted">客户信息</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <button class="btn btn-outline-primary btn-sm" onclick="loadDataOverview()">
+                                    <i class="fas fa-refresh"></i> 刷新
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 备份进度模态框 -->
+<div class="modal fade" id="backupProgressModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">备份进度</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">备份中...</span>
+                </div>
+                <p class="mt-3">正在创建数据备份，请稍候...</p>
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 100%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 恢复确认模态框 -->
+<div class="modal fade" id="restoreConfirmModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">确认数据恢复</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>警告：</strong>数据恢复操作将完全覆盖当前系统中的所有数据，此操作不可逆！
+                </div>
+                <p>您确定要从备份文件恢复数据吗？</p>
+                <div id="backupFileInfo"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" onclick="confirmRestore()">确认恢复</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    loadDataOverview();
+    loadBackupList();
+});
+
+function createBackup() {
+    let note = $('#backup_note').val().trim();
+    
+    $('#backupProgressModal').modal('show');
+    
+    $.ajax({
+        url: '/api/backup',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ note: note }),
+        success: function(response) {
+            $('#backupProgressModal').modal('hide');
+            
+            if (response.success) {
+                alert(`备份创建成功！\n文件名：${response.filename}`);
+                $('#backup_note').val('');
+                loadBackupList();
+            } else {
+                alert('备份失败：' + (response.message || '未知错误'));
+            }
+        },
+        error: function() {
+            $('#backupProgressModal').modal('hide');
+            alert('备份操作失败');
+        }
+    });
+}
+
+function loadBackupList() {
+    // 这里应该从服务器获取备份文件列表
+    // 由于是演示系统，我们显示一个示例列表
+    let backupListHtml = `
+        <div class="alert alert-warning">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>注意：</strong>在实际生产环境中，这里应该显示服务器上的备份文件列表。
+            当前显示的是示例数据。
+        </div>
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>文件名</th>
+                        <th>创建时间</th>
+                        <th>大小</th>
+                        <th>备注</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>backup_20240101_120000.json</td>
+                        <td>2024-01-01 12:00:00</td>
+                        <td>2.5 MB</td>
+                        <td>系统初始化备份</td>
+                        <td>
+                            <button class="btn btn-sm btn-success" onclick="downloadBackup('backup_20240101_120000.json')">
+                                <i class="fas fa-download"></i> 下载
+                            </button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    $('#backupList').html(backupListHtml);
+}
+
+function downloadBackup(filename) {
+    // 在实际环境中，这里应该下载服务器上的备份文件
+    alert(`下载备份文件：${filename}\n\n在实际环境中，这会触发文件下载。`);
+}
+
+function restoreBackup() {
+    let fileInput = $('#restore_file')[0];
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+        alert('请选择备份文件');
+        return;
+    }
+    
+    let file = fileInput.files[0];
+    
+    // 显示文件信息
+    $('#backupFileInfo').html(`
+        <strong>文件名：</strong>${file.name}<br>
+        <strong>文件大小：</strong>${(file.size / 1024 / 1024).toFixed(2)} MB<br>
+        <strong>修改时间：</strong>${new Date(file.lastModified).toLocaleString('zh-CN')}
+    `);
+    
+    $('#restoreConfirmModal').modal('show');
+}
+
+function confirmRestore() {
+    let fileInput = $('#restore_file')[0];
+    let file = fileInput.files[0];
+    
+    let reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let backupData = JSON.parse(e.target.result);
+            
+            // 这里应该调用API来恢复数据
+            // 由于这是演示系统，我们只显示一个提示
+            alert('数据恢复功能已触发！\n\n在实际环境中，这会执行以下操作：\n1. 验证备份文件格式\n2. 清空当前数据\n3. 恢复备份数据\n4. 重建索引');
+            
+            $('#restoreConfirmModal').modal('hide');
+            $('#restore_file').val('');
+            
+        } catch (error) {
+            alert('备份文件格式错误：' + error.message);
+        }
+    };
+    
+    reader.readAsText(file);
+}
+
+function loadDataOverview() {
+    // 加载各类数据的数量统计
+    Promise.all([
+        $.get('/api/vcds'),
+        $.get('/api/inventory'),
+        $.get('/api/sales'),
+        $.get('/api/rentals')
+    ]).then(function(results) {
+        let vcds = results[0];
+        let inventory = results[1];
+        let sales = results[2];
+        let rentals = results[3];
+        
+        $('#totalVcds').text(vcds.length);
+        $('#totalInventory').text(inventory.length);
+        $('#totalSales').text(sales.length);
+        $('#totalRentals').text(rentals.length);
+        
+        // 客户数据（从销售和租赁记录中统计唯一客户）
+        let customerPhones = new Set();
+        sales.forEach(sale => {
+            if (sale.customer_phone) customerPhones.add(sale.customer_phone);
+        });
+        rentals.forEach(rental => {
+            if (rental.customer_phone) customerPhones.add(rental.customer_phone);
+        });
+        $('#totalCustomers').text(customerPhones.size);
+        
+    }).catch(function() {
+        console.error('加载数据概览失败');
+    });
+}
+
+// 定期备份提醒
+setInterval(function() {
+    let lastBackup = localStorage.getItem('lastBackupDate');
+    let today = new Date().toDateString();
+    
+    if (!lastBackup || lastBackup !== today) {
+        // 如果今天还没有备份过，显示提醒（这里只是控制台提醒）
+        console.log('建议进行数据备份');
+    }
+}, 60000 * 60); // 每小时检查一次
+
+// 备份成功后记录日期
+function recordBackupDate() {
+    localStorage.setItem('lastBackupDate', new Date().toDateString());
+}
+</script>
+{% endblock %} 

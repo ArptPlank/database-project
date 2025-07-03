@@ -1,0 +1,4 @@
+# Markdown到Word转换工具依赖包
+python-docx>=0.8.11
+markdown>=3.4.1
+lxml>=4.6.3 

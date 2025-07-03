@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}主页 - 音像店VCD管理系统{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- 页面标题 -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-4 text-center text-primary mb-3">
+                <i class="fas fa-compact-disc me-3"></i>音像店VCD管理系统
+            </h1>
+            <p class="lead text-center text-muted">
+                全面的VCD零售与出租管理解决方案
+            </p>
+        </div>
+    </div>
+
+    <!-- 统计卡片 -->
+    <div class="row mb-3" id="statsCards">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-compact-disc fa-2x mb-3"></i>
+                    <h4 class="card-title">VCD总数</h4>
+                    <h2 class="display-6" id="totalVcds">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-boxes fa-2x mb-3"></i>
+                    <h4 class="card-title">现货数量</h4>
+                    <h2 class="display-6" id="availableVcds">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-handshake fa-2x mb-3"></i>
+                    <h4 class="card-title">借出数量</h4>
+                    <h2 class="display-6" id="rentedVcds">0</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-cart fa-2x mb-3"></i>
+                    <h4 class="card-title">今日销售</h4>
+                    <h2 class="display-6" id="todaySales">0</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 数据状态和修复功能 -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title mb-1">数据状态</h6>
+                            <small class="text-muted" id="lastUpdateTime">正在加载...</small>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-outline-warning btn-sm me-2" onclick="refreshData()">
+                                <i class="fas fa-sync-alt"></i> 刷新数据
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm me-2" onclick="fixAllData()">
+                                <i class="fas fa-wrench"></i> 修复数据
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" onclick="resetAllData()">
+                                <i class="fas fa-trash-alt"></i> 重置数据
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 功能模块 -->
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4 text-center">系统功能</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-compact-disc fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">VCD信息管理</h5>
+                    <p class="card-text">管理VCD基本信息，包括名称、类型、价格、导演、演员等详细信息。</p>
+                    <a href="{{ url_for('vcd_management') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-right me-1"></i>进入管理
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-boxes fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">库存管理</h5>
+                    <p class="card-text">管理VCD库存，支持入库操作，实时查看各类VCD的库存状态。</p>
+                    <a href="{{ url_for('inventory_management') }}" class="btn btn-success">
+                        <i class="fas fa-arrow-right me-1"></i>查看库存
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-cart fa-3x text-warning mb-3"></i>
+                    <h5 class="card-title">零售管理</h5>
+                    <p class="card-text">处理VCD销售业务，自动更新库存，记录销售历史。</p>
+                    <a href="{{ url_for('sales_management') }}" class="btn btn-warning">
+                        <i class="fas fa-arrow-right me-1"></i>销售管理
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-handshake fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">借还管理</h5>
+                    <p class="card-text">管理VCD租借业务，跟踪借出和归还，自动计算租金。</p>
+                    <a href="{{ url_for('rental_management') }}" class="btn btn-info">
+                        <i class="fas fa-arrow-right me-1"></i>借还管理
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-3x text-secondary mb-3"></i>
+                    <h5 class="card-title">统计报表</h5>
+                    <p class="card-text">查看销售和借还统计报表，分析业务数据和趋势。</p>
+                    <a href="{{ url_for('statistics') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>查看报表
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm hover-shadow">
+                <div class="card-body text-center">
+                    <i class="fas fa-database fa-3x text-dark mb-3"></i>
+                    <h5 class="card-title">数据备份</h5>
+                    <p class="card-text">备份和恢复系统数据，确保数据安全性。</p>
+                    <a href="{{ url_for('backup_management') }}" class="btn btn-dark">
+                        <i class="fas fa-arrow-right me-1"></i>数据备份
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系统特点 -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h2 class="mb-4 text-center">系统特点</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="text-center">
+                <i class="fas fa-bolt fa-2x text-warning mb-3"></i>
+                <h5>自动触发</h5>
+                <p class="text-muted">销售和借还操作自动更新库存，无需手动维护。</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="text-center">
+                <i class="fas fa-chart-line fa-2x text-success mb-3"></i>
+                <h5>智能统计</h5>
+                <p class="text-muted">基于聚合管道的高效统计分析，支持自定义时间段。</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="text-center">
+                <i class="fas fa-shield-alt fa-2x text-primary mb-3"></i>
+                <h5>数据安全</h5>
+                <p class="text-muted">完善的数据备份恢复机制，保障数据安全。</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // 加载统计数据
+    loadDashboardStats();
+});
+
+function refreshData() {
+    notifications.showLoading('正在刷新数据...');
+    loadDashboardStats();
+    setTimeout(function() {
+        notifications.hideLoading();
+        notifications.success('数据已刷新');
+    }, 1000);
+}
+
+async function fixAllData() {
+    const confirmed = await notifications.confirm(
+        '数据修复确认',
+        '这将重新计算所有库存数量，清理无效记录，修复数据一致性问题。此操作不可撤销，确定要继续吗？'
+    );
+    
+    if (confirmed) {
+        notifications.showLoading('正在修复数据，请稍候...');
+        
+        $.ajax({
+            url: '/api/data/fix-all',
+            method: 'POST',
+            success: function(response) {
+                notifications.hideLoading();
+                if (response.success) {
+                    let message = response.message;
+                    if (response.details && response.details.length > 0) {
+                        message += '\n\n修复详情:\n' + response.details.join('\n');
+                    }
+                    if (response.validation_errors && response.validation_errors.length > 0) {
+                        message += '\n\n警告:\n' + response.validation_errors.join('\n');
+                    }
+                    
+                    notifications.success('数据修复完成');
+                    
+                    // 显示详细信息
+                    setTimeout(async function() {
+                        await notifications.confirm(
+                            '修复结果',
+                            message
+                        );
+                        // 刷新数据
+                        loadDashboardStats();
+                    }, 500);
+                    
+                } else {
+                    notifications.error('修复失败: ' + response.message);
+                }
+            },
+            error: function() {
+                notifications.hideLoading();
+                notifications.error('网络错误，修复失败');
+            }
+        });
+    }
+}
+
+async function resetAllData() {
+    const firstConfirm = await notifications.confirm(
+        '⚠️ 危险操作：重置所有数据',
+        '警告：此操作将彻底清空所有业务数据！\n\n将被清空的数据：\n• 所有销售记录\n• 所有租借归还记录\n• 所有客户信息\n• 所有库存记录\n\n保留的数据：\n• VCD基本信息（名称、类型、价格等）\n\n每个VCD将重置为默认库存10个。\n\n此操作不可撤销！确定要继续吗？'
+    );
+    
+    if (firstConfirm) {
+        // 二次确认
+        const finalConfirm = await notifications.confirm(
+            '🚨 最后确认',
+            '您真的确定要清空所有业务数据吗？\n\n这是最后一次确认机会！'
+        );
+        
+        if (finalConfirm) {
+            notifications.showLoading('正在重置所有数据，请稍候...');
+            
+            $.ajax({
+                url: '/api/data/reset-all',
+                method: 'POST',
+                success: function(response) {
+                    notifications.hideLoading();
+                    if (response.success) {
+                        let message = response.message;
+                        if (response.details && response.details.length > 0) {
+                            message += '\n\n重置详情:\n' + response.details.join('\n');
+                        }
+                        
+                        notifications.success('数据重置完成');
+                        
+                        // 显示详细信息
+                        setTimeout(async function() {
+                            await notifications.confirm(
+                                '重置成功',
+                                message + '\n\n现在您可以重新开始录入数据了！'
+                            );
+                            // 刷新页面
+                            window.location.reload();
+                        }, 500);
+                        
+                    } else {
+                        notifications.error('重置失败: ' + response.message);
+                    }
+                },
+                error: function() {
+                    notifications.hideLoading();
+                    notifications.error('网络错误，重置失败');
+                }
+            });
+        }
+    }
+}
+
+function loadDashboardStats() {
+    // 加载库存统计
+    $.get('/api/inventory', function(data) {
+        let totalVcds = 0;
+        let availableVcds = 0;
+        let rentedVcds = 0;
+        
+        data.forEach(function(item) {
+            totalVcds += item.total_quantity || 0;
+            availableVcds += item.available_quantity || 0;
+            // 确保租借数量不为负数
+            rentedVcds += Math.max(0, item.rented_quantity || 0);
+        });
+        
+        $('#totalVcds').text(totalVcds);
+        $('#availableVcds').text(availableVcds);
+        $('#rentedVcds').text(rentedVcds);
+        
+        // 添加最后更新时间
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('zh-CN');
+        $('#lastUpdateTime').text('最后更新: ' + timeStr);
+    });
+    
+    // 加载今日销售统计
+    const today = new Date().toISOString().split('T')[0];
+    $.get('/api/statistics/sales?start_date=' + today + '&end_date=' + today, function(data) {
+        let todaySales = 0;
+        data.forEach(function(item) {
+            todaySales += item.total_sold || 0;
+        });
+        $('#todaySales').text(todaySales);
+    });
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}VCD管理 - 音像店VCD管理系统{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">
+                <i class="fas fa-compact-disc me-2"></i>VCD信息管理
+            </h2>
+        </div>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVcdModal">
+                <i class="fas fa-plus me-1"></i>添加VCD
+            </button>
+            <button class="btn btn-success ms-2" onclick="loadVcds()">
+                <i class="fas fa-refresh me-1"></i>刷新列表
+            </button>
+        </div>
+    </div>
+
+    <!-- VCD列表表格 -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">VCD列表</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="vcdTable">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>名称</th>
+                                    <th>类型</th>
+                                    <th>导演</th>
+                                    <th>主演</th>
+                                    <th>售价</th>
+                                    <th>租金/天</th>
+                                    <th>发行年份</th>
+                                    <th>语言</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vcdTableBody">
+                                <!-- 数据将通过AJAX加载 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 添加VCD模态框 -->
+<div class="modal fade" id="addVcdModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">添加VCD</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addVcdForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">VCD名称 *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="type" class="form-label">类型 *</label>
+                            <select class="form-select" id="type" name="type" required>
+                                <option value="">请选择类型</option>
+                                <option value="动作片">动作片</option>
+                                <option value="喜剧片">喜剧片</option>
+                                <option value="爱情片">爱情片</option>
+                                <option value="科幻片">科幻片</option>
+                                <option value="恐怖片">恐怖片</option>
+                                <option value="剧情片">剧情片</option>
+                                <option value="动画片">动画片</option>
+                                <option value="纪录片">纪录片</option>
+                                <option value="音乐">音乐</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="director" class="form-label">导演</label>
+                            <input type="text" class="form-control" id="director" name="director">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="actors" class="form-label">主演</label>
+                            <input type="text" class="form-control" id="actors" name="actors">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="sale_price" class="form-label">售价（元）*</label>
+                            <input type="number" class="form-control" id="sale_price" name="sale_price" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="rental_price" class="form-label">租金/天（元）*</label>
+                            <input type="number" class="form-control" id="rental_price" name="rental_price" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="release_year" class="form-label">发行年份</label>
+                            <input type="number" class="form-control" id="release_year" name="release_year" min="1900" max="2030">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="language" class="form-label">语言</label>
+                            <input type="text" class="form-control" id="language" name="language" value="中文">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="duration" class="form-label">时长（分钟）</label>
+                            <input type="number" class="form-control" id="duration" name="duration" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="rating" class="form-label">评级</label>
+                            <select class="form-select" id="rating" name="rating">
+                                <option value="">请选择评级</option>
+                                <option value="G">G - 所有年龄</option>
+                                <option value="PG">PG - 需要家长指导</option>
+                                <option value="PG-13">PG-13 - 13岁以下需家长陪同</option>
+                                <option value="R">R - 17岁以下需家长陪同</option>
+                                <option value="NC-17">NC-17 - 17岁以下禁止观看</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">简介</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="addVcd()">保存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 编辑VCD模态框 -->
+<div class="modal fade" id="editVcdModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">编辑VCD</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editVcdForm">
+                    <input type="hidden" id="edit_vcd_id">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_name" class="form-label">VCD名称 *</label>
+                            <input type="text" class="form-control" id="edit_name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_type" class="form-label">类型 *</label>
+                            <select class="form-select" id="edit_type" name="type" required>
+                                <option value="">请选择类型</option>
+                                <option value="动作片">动作片</option>
+                                <option value="喜剧片">喜剧片</option>
+                                <option value="爱情片">爱情片</option>
+                                <option value="科幻片">科幻片</option>
+                                <option value="恐怖片">恐怖片</option>
+                                <option value="剧情片">剧情片</option>
+                                <option value="动画片">动画片</option>
+                                <option value="纪录片">纪录片</option>
+                                <option value="音乐">音乐</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_director" class="form-label">导演</label>
+                            <input type="text" class="form-control" id="edit_director" name="director">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_actors" class="form-label">主演</label>
+                            <input type="text" class="form-control" id="edit_actors" name="actors">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_sale_price" class="form-label">售价（元）*</label>
+                            <input type="number" class="form-control" id="edit_sale_price" name="sale_price" step="0.01" min="0" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_rental_price" class="form-label">租金/天（元）*</label>
+                            <input type="number" class="form-control" id="edit_rental_price" name="rental_price" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_release_year" class="form-label">发行年份</label>
+                            <input type="number" class="form-control" id="edit_release_year" name="release_year" min="1900" max="2030">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_language" class="form-label">语言</label>
+                            <input type="text" class="form-control" id="edit_language" name="language">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_duration" class="form-label">时长（分钟）</label>
+                            <input type="number" class="form-control" id="edit_duration" name="duration" min="1">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_rating" class="form-label">评级</label>
+                            <select class="form-select" id="edit_rating" name="rating">
+                                <option value="">请选择评级</option>
+                                <option value="G">G - 所有年龄</option>
+                                <option value="PG">PG - 需要家长指导</option>
+                                <option value="PG-13">PG-13 - 13岁以下需家长陪同</option>
+                                <option value="R">R - 17岁以下需家长陪同</option>
+                                <option value="NC-17">NC-17 - 17岁以下禁止观看</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_description" class="form-label">简介</label>
+                        <textarea class="form-control" id="edit_description" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" onclick="updateVcd()">保存修改</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    loadVcds();
+    
+    // 监听页面焦点事件，页面重新获得焦点时刷新数据
+    $(window).on('focus', function() {
+        loadVcds();
+    });
+    
+    // 每60秒自动刷新一次数据
+    setInterval(function() {
+        loadVcds();
+    }, 60000);
+});
+
+function loadVcds() {
+    $.get('/api/vcds?t=' + new Date().getTime(), function(data) {
+        let tbody = $('#vcdTableBody');
+        tbody.empty();
+        
+        data.forEach(function(vcd) {
+            let row = `
+                <tr>
+                    <td>${vcd.name}</td>
+                    <td><span class="badge bg-primary">${vcd.type}</span></td>
+                    <td>${vcd.director || '-'}</td>
+                    <td>${vcd.actors || '-'}</td>
+                    <td>¥${vcd.sale_price}</td>
+                    <td>¥${vcd.rental_price}</td>
+                    <td>${vcd.release_year || '-'}</td>
+                    <td>${vcd.language || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary me-1" onclick="editVcd('${vcd._id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteVcd('${vcd._id}', '${vcd.name}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }).fail(function() {
+        notifications.error('加载VCD列表失败，请检查网络连接或刷新页面重试');
+    });
+}
+
+async function addVcd() {
+    const button = event.target;
+    const formData = {
+        name: $('#name').val(),
+        type: $('#type').val(),
+        director: $('#director').val(),
+        actors: $('#actors').val(),
+        sale_price: parseFloat($('#sale_price').val()),
+        rental_price: parseFloat($('#rental_price').val()),
+        release_year: parseInt($('#release_year').val()) || null,
+        language: $('#language').val(),
+        duration: parseInt($('#duration').val()) || null,
+        rating: $('#rating').val(),
+        description: $('#description').val()
+    };
+    
+    if (!formData.name || !formData.type || !formData.sale_price || !formData.rental_price) {
+        notifications.warning('请填写必填字段：VCD名称、类型、售价和租金');
+        return;
+    }
+    
+    try {
+        ButtonLoader.setLoading(button, '添加中...');
+        
+        const response = await ApiClient.post('/api/vcds', formData);
+        
+        if (response.success) {
+            notifications.success(`VCD "${formData.name}" 添加成功`);
+            $('#addVcdModal').modal('hide');
+            $('#addVcdForm')[0].reset();
+            loadVcds();
+        } else {
+            notifications.error('添加失败：' + (response.message || '未知错误'));
+        }
+    } catch (error) {
+        notifications.error('添加失败：' + error.message);
+    } finally {
+        ButtonLoader.removeLoading(button);
+    }
+}
+
+function editVcd(vcdId) {
+    $.get('/api/vcds', function(data) {
+        let vcd = data.find(v => v._id === vcdId);
+        if (vcd) {
+            $('#edit_vcd_id').val(vcd._id);
+            $('#edit_name').val(vcd.name);
+            $('#edit_type').val(vcd.type);
+            $('#edit_director').val(vcd.director || '');
+            $('#edit_actors').val(vcd.actors || '');
+            $('#edit_sale_price').val(vcd.sale_price);
+            $('#edit_rental_price').val(vcd.rental_price);
+            $('#edit_release_year').val(vcd.release_year || '');
+            $('#edit_language').val(vcd.language || '');
+            $('#edit_duration').val(vcd.duration || '');
+            $('#edit_rating').val(vcd.rating || '');
+            $('#edit_description').val(vcd.description || '');
+            
+            $('#editVcdModal').modal('show');
+        }
+    });
+}
+
+function updateVcd() {
+    let vcdId = $('#edit_vcd_id').val();
+    let formData = {
+        name: $('#edit_name').val(),
+        type: $('#edit_type').val(),
+        director: $('#edit_director').val(),
+        actors: $('#edit_actors').val(),
+        sale_price: parseFloat($('#edit_sale_price').val()),
+        rental_price: parseFloat($('#edit_rental_price').val()),
+        release_year: parseInt($('#edit_release_year').val()) || null,
+        language: $('#edit_language').val(),
+        duration: parseInt($('#edit_duration').val()) || null,
+        rating: $('#edit_rating').val(),
+        description: $('#edit_description').val()
+    };
+    
+    if (!formData.name || !formData.type || !formData.sale_price || !formData.rental_price) {
+        alert('请填写必填字段');
+        return;
+    }
+    
+    $.ajax({
+        url: '/api/vcds/' + vcdId,
+        method: 'PUT',
+        contentType: 'application/json',
+        data: JSON.stringify(formData),
+        success: function(response) {
+            if (response.success) {
+                alert('VCD更新成功');
+                $('#editVcdModal').modal('hide');
+                loadVcds();
+            } else {
+                alert('更新失败');
+            }
+        },
+        error: function() {
+            alert('更新失败');
+        }
+    });
+}
+
+async function deleteVcd(vcdId, vcdName) {
+    const confirmed = await notifications.confirm(
+        '确认删除',
+        `确定要删除 "${vcdName}" 吗？此操作不可恢复。`,
+        '确认删除',
+        '取消'
+    );
+    
+    if (confirmed) {
+        try {
+            notifications.showLoading('删除中...');
+            
+            const response = await ApiClient.delete(`/api/vcds/${vcdId}`);
+            
+            if (response.success) {
+                notifications.success(`VCD "${vcdName}" 删除成功`);
+                loadVcds();
+            } else {
+                notifications.error('删除失败：' + (response.message || '未知错误'));
+            }
+        } catch (error) {
+            notifications.error('删除失败：' + error.message);
+        } finally {
+            notifications.hideLoading();
+        }
+    }
+}
+</script>
+{% endblock %} 
